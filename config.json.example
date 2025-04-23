@@ -1,7 +1,6 @@
 {
     "cloud_config": {
-        "instance_id": "i-aaaaaaaaaaaaaa",
-        "aws_profile": "aws-profile",
+        "aws_profile": "aws-profile", # Profile with user with Read / Stop / Start priviledges on EC2
         "region": "us-east-1"
     }
 }
