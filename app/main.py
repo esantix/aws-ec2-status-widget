@@ -20,7 +20,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 try:
     with open(default_config_path, "r") as f:
         config = json.load(f)
-except FileNotFoundError:
+except Exception:
     logging.error("Unable to fetch config path. Using defaults")
     with open(f"{script_dir}/config/defaults_config.json", "r") as f:
         config = json.load(f)
