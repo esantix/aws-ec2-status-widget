@@ -1,0 +1,7 @@
+{
+    "cloud_config": {
+        "instance_id": "i-aaaaaaaaaaaaaa",
+        "aws_profile": "aws-profile",
+        "region": "us-east-1"
+    }
+}
