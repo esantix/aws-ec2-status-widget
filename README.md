@@ -1,2 +1,4 @@
-# aws-status-widget
-An AWS widget for top bar taht can display status info
+# AWS EC2's status widget [WIP]
+An MacOS top bar widget to easily see and control your EC2 instances
+
+ ![image](./img/show.png)
