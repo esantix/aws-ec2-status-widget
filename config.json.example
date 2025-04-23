@@ -1,6 +1,11 @@
 {
     "cloud_config": {
-        "aws_profile": "aws-profile", # Profile with user with Read / Stop / Start priviledges on EC2
+        "aws_profile": "profile-name",
         "region": "us-east-1"
+    },
+    "refresh_rate_s": 15,
+    "checks": {
+        "check_rate_m": 60,
+        "alert_running_instances_number": 1
     }
 }

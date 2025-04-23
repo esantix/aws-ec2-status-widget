@@ -65,9 +65,9 @@ def start_callback(instance):
     return start_instace
 
 
+    
+
 STATE_ICON = {"stopped": "🔴", "running": "🟢", "pending": "🔺", "stopping": "🔻"}
-
-
 START = "✓  Start"
 STOP = "⊖  Stop"
 REFRESH = "↺  Refresh"
@@ -80,28 +80,48 @@ def copy_text_to_clipboard(_):
 class AWSStatus(rumps.App):
     def __init__(self):
         super(AWSStatus, self).__init__("EC2s", icon=None)
-        self.status = ""
+        self.status = {
+            "running_instances": 0
+        }
 
-        self.timer = rumps.Timer(self.refresh, 5.0)
+        self.timer = rumps.Timer(self.refresh, config["refresh_rate_s"])
         self.timer.start()
+
+        self.check_timer = rumps.Timer(self.run_checks, config["checks"]["check_rate_m"] * 60)
+        self.check_timer.start()
 
         self.build_menu()
 
-    def build_menu(self):
+    def run_checks(self):
+        """Runs notifications alerts check based on current data (refreshed on refresh_rate_s)
+        """
+        
+        if self.status["on_instances"] > config["checks"]["alert_running_instances_number"]:
+            rumps.notification("EC2 Status alert!", f"{self.status['on_instances']} Instances running", "")
+
+    def refresh(self, _):
+        """ Fetches EC2s data and refreshes menu
+        """
+
+        for key in self.menu.keys():
+            del self.menu[key]
 
         instances = get_all_ec2_instances_status()
+        
+        self.status["running_instances"] = 0
         for instance in instances:
 
-            print(instance)
             instance_id = instance[0]
             status = instance[1]
             in_type = instance[2]
+
+            if status == "running":
+                self.status["running_instances"] += 1
 
             instance_menu = rumps.MenuItem(
                 f"{STATE_ICON[status]}  {instance_id} ({in_type})",
                 callback=copy_text_to_clipboard,
             )
-            # instance_menu.add(rumps.MenuItem(f"Status: {status} ", callback=self.do_nothing))
             instance_menu.add(rumps.separator)
             instance_menu.add(rumps.MenuItem(START, callback=None))
             instance_menu.add(rumps.MenuItem(STOP, callback=None))
@@ -112,7 +132,7 @@ class AWSStatus(rumps.App):
             self.menu.add(instance_menu)
 
         self.menu.add(rumps.separator)
-        self.menu.add(rumps.MenuItem(REFRESH, callback=self.on_refresh))
+        self.menu.add(rumps.MenuItem(REFRESH, callback=self.refresh))
 
     def update_submenu(self, menu, instance_id, status):
         if status == "running":
@@ -132,17 +152,6 @@ class AWSStatus(rumps.App):
             menu[STOP].set_callback(None)
             menu[START].enabled = False
             menu[STOP].enabled = False
-
-    def refresh(self, _=None):
-        for key in self.menu.keys():
-            del self.menu[key]
-        self.build_menu()
-
-    def on_refresh(self, _):
-        self.refresh()
-
-    def do_nothing(self, _):
-        pass  # placeholder to keep menu item enabled
 
 
 AWSStatus().run()
