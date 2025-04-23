@@ -17,7 +17,7 @@ An MacOS top bar widget to easily see and control your EC2 instances.
 ## Disclaimer
 App handles AWS auth by setting a profile. It's up to you to set proper permissions. 
 
-User or role must have read only permissions plus:
+User or role must have the following permissions (recommended to be limited to):
 
 ```json
 {
@@ -27,6 +27,8 @@ User or role must have read only permissions plus:
 			"Effect": "Allow",
 			"Action": [
 				"ec2:StartInstances",
+				"ec2:ListInstances",
+				"ec2:DescribeInstances",
 				"ec2:StopInstances"
 			],
 			"Resource": "*"
