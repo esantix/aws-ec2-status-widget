@@ -1,31 +1,11 @@
 import json
 import pyperclip
 import rumps
-import os
 from aws_helper import get_ec2_instances_status, stop_instance, start_instace
 from functools import partial
 from constants import STATE_ICON, APP_STATE_ICON, START, STOP, REFRESH
-from Foundation import NSBundle
-import logging
 
-# Set app to run on background
-info = NSBundle.mainBundle().infoDictionary()
-info["LSBackgroundOnly"] = "1"
-
-# Load app config
-home_dir = os.path.expanduser("~")
-default_config_path = f"{home_dir}/.ec2app/config.json"
-script_dir = os.path.dirname(os.path.abspath(__file__))
-
-try:
-    with open(default_config_path, "r") as f:
-        config = json.load(f)
-except Exception:
-    logging.error("Unable to fetch config path. Using defaults")
-    with open(f"{script_dir}/config/defaults_config.json", "r") as f:
-        config = json.load(f)
-
-aws_config = config["server"]["aws"]
+from configuration import config, aws_config
 
 
 def start_callback(instance):
@@ -53,9 +33,9 @@ def clipboard_callback(text, notify=False):
     return copy_text_to_clipboard
 
 
-class AWSStatus(rumps.App):
+class EC2App(rumps.App):
     def __init__(self):
-        super(AWSStatus, self).__init__("Loading...", icon=None)
+        super(EC2App, self).__init__("Loading...", icon=None)
         self.status = {"running_instances": 0, "app_status": "off"}
         self.just_ui = False
         self.icon = APP_STATE_ICON[self.status["app_status"]]
@@ -166,4 +146,4 @@ class AWSStatus(rumps.App):
             menu[STOP].enabled = False
 
 
-AWSStatus().run()
+EC2App().run()
