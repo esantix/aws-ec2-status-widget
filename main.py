@@ -66,6 +66,7 @@ def start_callback(instance):
 
 
 STATE_ICON = {"stopped": "🔴", "running": "🟢", "pending": "🔺", "stopping": "🔻"}
+APP_STATE_ICON = {"on": "img/green.png", "off": "img/gray.png", }
 START = "✓  Start"
 STOP = "⊖  Stop"
 REFRESH = "↺  Refresh"
@@ -78,8 +79,9 @@ def copy_text_to_clipboard(_):
 class AWSStatus(rumps.App):
     def __init__(self):
         super(AWSStatus, self).__init__("EC2", icon=None)
-        self.status = {"running_instances": 0}
+        self.status = {"running_instances": 0, "app_status": "off"}
         self.just_ui = False
+        self.icon = APP_STATE_ICON[self.status["app_status"]]
 
         self.timer = rumps.Timer(self.refresh, config["refresh_rate_s"])
         self.timer.start()
@@ -136,10 +138,11 @@ class AWSStatus(rumps.App):
             self.menu.add(instance_menu)
 
         if self.status["running_instances"] > 0:
-            self.title = "🟢 EC2"
+            self.status["app_status"] = "on"
         else:
-            self.title = "EC2"
+            self.status["app_status"] = "off"
 
+        self.icon = APP_STATE_ICON[self.status["app_status"]]
         self.menu.add(rumps.separator)
         self.menu.add(rumps.MenuItem(REFRESH, callback=self.refresh))
 
