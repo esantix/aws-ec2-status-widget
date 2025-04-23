@@ -4,7 +4,7 @@ import rumps
 from aws_helper import get_ec2_instances_status, stop_instance, start_instace
 from functools import partial
 from constants import (
-    DEFAULT_CONFIG_PATH,
+    SETTINGS_BUTTON,
     OPEN_CONSOLE,
     STATE_ICON,
     APP_STATE_ICON,
@@ -13,25 +13,15 @@ from constants import (
     REFRESH,
 )
 import webbrowser
-from configuration import config, aws_config, default_config_path
-import os
+from configuration import get_config
 import subprocess
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 
 def notify(msg):
     rumps.notification("EC2 Status app", "", msg)
-
-
-def start_callback(instance):
-    return partial(
-        start_instace, config=aws_config, instance=instance[0], region=instance[1]
-    )
-
-
-def stop_callback(instance):
-    return partial(
-        stop_instance, config=aws_config, instance=instance[0], region=instance[1]
-    )
 
 
 def empty_callback(_):
@@ -47,29 +37,24 @@ def clipboard_callback(text, notify=False):
     return copy_text_to_clipboard
 
 
-def go_to_console_callback(_):
-    url = aws_config["console_link"]
-    webbrowser.open(url)
-    return
 
-
-def open_settings_callback(_):
-    subprocess.run(["open", default_config_path])
-    return
 
 
 class EC2App(rumps.App):
     def __init__(self):
         super(EC2App, self).__init__("Loading...", icon=None)
+
+        self.load_config()
+
         self.status = {"running_instances": 0, "app_status": "off"}
         self.just_ui = False
         self.icon = APP_STATE_ICON[self.status["app_status"]]
 
-        self.timer = rumps.Timer(self.refresh, config["refresh_rate_s"])
+        self.timer = rumps.Timer(self.refresh, self.config["refresh_rate_s"])
         self.timer.start()
 
         self.check_timer = rumps.Timer(
-            self.run_checks, config["checks"]["check_rate_m"] * 60
+            self.run_checks, self.config["checks"]["check_rate_m"] * 60
         )
         self.check_timer.start()
 
@@ -79,8 +64,7 @@ class EC2App(rumps.App):
         """Runs notifications alerts check based on current data (refreshed on refresh_rate_s)"""
 
         if (
-            self.status["running_instances"]
-            > config["checks"]["alert_running_instances_number"]
+            self.status["running_instances"] > self.config["checks"]["alert_running_instances_number"]
         ):
             rumps.notification(
                 "EC2 Status alert!",
@@ -88,14 +72,23 @@ class EC2App(rumps.App):
                 "",
             )
 
+    def load_config(self):
+        self.config = get_config()
+        logging.info(self.config)
+        self.aws_config = self.config["server"]["aws"]
+
+    def open_settings_callback(self, _):
+        subprocess.run(["open", self.config["default_config_path"]])
+        return
+
     def refresh(self, _):
         """Fetches EC2s data and refreshes menu"""
-
+        self.load_config()
         for key in self.menu.keys():
             del self.menu[key]
 
         try:
-            instances = get_ec2_instances_status(aws_config)
+            instances = get_ec2_instances_status(self.aws_config)
         except Exception:
             notify("Unable to fetch EC2 data")
             instances = []
@@ -154,19 +147,19 @@ class EC2App(rumps.App):
 
         self.icon = APP_STATE_ICON[self.status["app_status"]]
         self.menu.add(rumps.separator)
-        self.menu.add(rumps.MenuItem(OPEN_CONSOLE, callback=go_to_console_callback))
         self.menu.add(rumps.MenuItem(REFRESH, callback=self.refresh))
-        self.menu.add(rumps.MenuItem("Settings", callback=open_settings_callback))
+        self.menu.add(rumps.MenuItem(OPEN_CONSOLE, callback=self.go_to_console_callback))
+        self.menu.add(rumps.MenuItem(SETTINGS_BUTTON, callback=self.open_settings_callback))
 
     def update_submenu(self, menu, instance, status):
         if status == "running":
             menu[START].set_callback(None)
             menu[START].enabled = False
-            menu[STOP].set_callback(stop_callback(instance))
+            menu[STOP].set_callback(self.stop_callback(instance))
             menu[STOP].enabled = True
 
         elif status == "stopped":
-            menu[START].set_callback(start_callback(instance))
+            menu[START].set_callback(self.start_callback(instance))
             menu[STOP].set_callback(None)
             menu[START].enabled = True
             menu[STOP].enabled = False
@@ -177,5 +170,19 @@ class EC2App(rumps.App):
             menu[START].enabled = False
             menu[STOP].enabled = False
 
+    def start_callback(self, instance):
+        return partial(
+            start_instace, config=self.aws_config, instance=instance[0], region=instance[1]
+        )
+
+    def stop_callback(self, instance):
+        return partial(
+            stop_instance, config=self.aws_config, instance=instance[0], region=instance[1]
+        )
+    
+    def go_to_console_callback(self, _):
+        url = self.aws_config["console_link"]
+        webbrowser.open(url)
+        return
 
 EC2App().run()
