@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+    "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>EC2Status</string>
+
+    <key>CFBundleIdentifier</key>
+    <string>com.yourname.myredirector</string>
+
+    <key>CFBundleVersion</key>
+    <string>1.0</string>
+
+    <key>CFBundleExecutable</key>
+    <string>launch.sh</string>
+
+    <key>CFBundleIconFile</key>
+    <string>SidebarInternet.icns</string>
+
+
+    <key>Label</key>
+    <string>com.app.ec2status</string>
+
+    <key>LSBackgroundOnly</key>
+    <true/>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>~/.ec2app/app.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>~/.ec2app/app.log</string>
+
+    <key>KeepAlive</key>
+    <true/>
+
+</dict>
+</plist>
