@@ -2,7 +2,8 @@
     "server": {
         "aws": {
             "aws_profile": "your-aws-profile",
-            "regions": ["us-east-1"]
+            "regions": ["us-east-1"],
+            "console_link": "https://signin.aws.amazon.com/signup?request_type=register"
         }
     },
     "refresh_rate_s": 30,

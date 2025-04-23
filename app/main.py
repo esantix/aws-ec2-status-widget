@@ -3,8 +3,8 @@ import pyperclip
 import rumps
 from aws_helper import get_ec2_instances_status, stop_instance, start_instace
 from functools import partial
-from constants import STATE_ICON, APP_STATE_ICON, START, STOP, REFRESH
-
+from constants import OPEN_CONSOLE, STATE_ICON, APP_STATE_ICON, START, STOP, REFRESH
+import webbrowser
 from configuration import config, aws_config
 
 
@@ -32,6 +32,10 @@ def clipboard_callback(text, notify=False):
 
     return copy_text_to_clipboard
 
+def go_to_console_callback(_):
+    url = aws_config["console_link"]
+    webbrowser.open(url)
+    return
 
 class EC2App(rumps.App):
     def __init__(self):
@@ -124,6 +128,7 @@ class EC2App(rumps.App):
 
         self.icon = APP_STATE_ICON[self.status["app_status"]]
         self.menu.add(rumps.separator)
+        self.menu.add(rumps.MenuItem(OPEN_CONSOLE, callback=go_to_console_callback))
         self.menu.add(rumps.MenuItem(REFRESH, callback=self.refresh))
 
     def update_submenu(self, menu, instance, status):
