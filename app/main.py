@@ -6,16 +6,24 @@ from aws_helper import get_ec2_instances_status, stop_instance, start_instace
 from functools import partial
 from constants import STATE_ICON, APP_STATE_ICON, START, STOP, REFRESH
 from Foundation import NSBundle
-
+import logging
 
 # Set app to run on background
 info = NSBundle.mainBundle().infoDictionary()
 info["LSBackgroundOnly"] = "1"
 
 # Load app config
+home_dir = os.path.expanduser("~")
+default_config_path = f"{home_dir}/.ec2app/config.json"
 script_dir = os.path.dirname(os.path.abspath(__file__))
-with open(f"{script_dir}/config/config.json", "r") as f:
-    config = json.load(f)
+
+try:
+    with open(default_config_path, "r") as f:
+        config = json.load(f)
+except FileNotFoundError:
+    logging.error("Unable to fetch config path. Using defaults")
+    with open(f"{script_dir}/config/defaults_config.json", "r") as f:
+        config = json.load(f)
 
 aws_config = config["server"]["aws"]
 
@@ -39,7 +47,7 @@ def empty_callback(_):
 def clipboard_callback(text, notify=False):
     def copy_text_to_clipboard(_):
         if notify:
-            rumps.notification("EC2 Status app", "Data copied to clipboard", "")
+            rumps.notification("EC2 Status app", "Data copied to clipboard", "", icon=f"{script_dir}/img/icon.png")
         pyperclip.copy(text)
 
     return copy_text_to_clipboard
@@ -47,7 +55,7 @@ def clipboard_callback(text, notify=False):
 
 class AWSStatus(rumps.App):
     def __init__(self):
-        super(AWSStatus, self).__init__("EC2", icon=None)
+        super(AWSStatus, self).__init__("Loading...", icon=None)
         self.status = {"running_instances": 0, "app_status": "off"}
         self.just_ui = False
         self.icon = APP_STATE_ICON[self.status["app_status"]]
