@@ -96,7 +96,7 @@ class AWSStatus(rumps.App):
             display_data = {
                 "Type": in_type,
                 "Region": region,
-                "PrivateIpAddress": data["PrivateIpAddress"],
+                "Private IP": data["PrivateIpAddress"],
             }
 
             if status == "running":
