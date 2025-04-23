@@ -6,17 +6,14 @@
     <key>CFBundleName</key>
     <string>EC2Status</string>
 
-    <key>CFBundleIdentifier</key>
-    <string>com.yourname.myredirector</string>
-
     <key>CFBundleVersion</key>
     <string>1.0</string>
 
     <key>CFBundleExecutable</key>
-    <string>launch.sh</string>
+    <string>EC2Status</string>
 
     <key>CFBundleIconFile</key>
-    <string>SidebarInternet.icns</string>
+    <string>EC2.icns</string>
 
 
     <key>Label</key>
@@ -27,12 +24,6 @@
 
     <key>RunAtLoad</key>
     <true/>
-
-    <key>StandardOutPath</key>
-    <string>~/.ec2app/app.log</string>
-
-    <key>StandardErrorPath</key>
-    <string>~/.ec2app/app.log</string>
 
     <key>KeepAlive</key>
     <true/>
