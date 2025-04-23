@@ -1,7 +1,9 @@
 {
-    "cloud_config": {
-        "aws_profile": "profile-name",
-        "region": "us-east-1"
+    "server": {
+        "aws": {
+            "aws_profile": "profile",
+            "regions": ["us-east-1"]
+        }
     },
     "refresh_rate_s": 15,
     "checks": {

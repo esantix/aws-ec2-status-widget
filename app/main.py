@@ -1,86 +1,49 @@
-from Foundation import NSBundle
-import objc
 import json
+import pyperclip
+import rumps
+import os
+from aws_helper import get_ec2_instances_status, stop_instance, start_instace
+from functools import partial
+from constants import STATE_ICON, APP_STATE_ICON, START, STOP, REFRESH
+from Foundation import NSBundle
 
+
+# Set app to run on background
 info = NSBundle.mainBundle().infoDictionary()
 info["LSBackgroundOnly"] = "1"
 
-import pyperclip
-import rumps
-import json
-import os
-import boto3
-
+# Load app config
 script_dir = os.path.dirname(os.path.abspath(__file__))
-
-with open(f"{script_dir}/config.json", "r") as f:
+with open(f"{script_dir}/config/config.json", "r") as f:
     config = json.load(f)
 
-aws_config = config["cloud_config"]
-
-
-def get_all_ec2_instances_status():
-    session = boto3.Session(
-        profile_name=aws_config["aws_profile"],
-        region_name=aws_config["region"],
-    )
-    ec2 = session.client("ec2")
-    response = ec2.describe_instances()
-
-    instances = []
-    for reservation in response["Reservations"]:
-        for instance in reservation["Instances"]:
-            instance_id = instance["InstanceId"]
-            status = instance["State"]["Name"]
-            instance_type = instance["InstanceType"]
-
-            instances.append((instance_id, status, instance_type))
-
-    return instances
-
-
-def stop_callback(instance):
-    def stop_instance(_):
-        session = boto3.Session(
-            profile_name=aws_config["aws_profile"],
-            region_name=aws_config["region"],
-        )
-        ec2 = session.client("ec2")
-        ec2.stop_instances(InstanceIds=[instance])
-        return
-
-    return stop_instance
+aws_config = config["server"]["aws"]
 
 
 def start_callback(instance):
-    def start_instace(_):
-        print("Starting...")
-        session = boto3.Session(
-            profile_name=aws_config["aws_profile"],
-            region_name=aws_config["region"],
-        )
-        ec2 = session.client("ec2")
-        ec2.start_instances(InstanceIds=[instance])
-        return
-
-    return start_instace
+    return partial(
+        start_instace, config=aws_config, instance=instance[0], region=instance[1]
+    )
 
 
-def callback_placeholder(_):
+def stop_callback(instance):
+    return partial(
+        stop_instance, config=aws_config, instance=instance[0], region=instance[1]
+    )
+
+
+def empty_callback(_):
     return
 
 
-STATE_ICON = {"stopped": "🔴", "running": "🟢", "pending": "🔺", "stopping": "🔻"}
-APP_STATE_ICON = {"on": "img/green.png", "off": "img/gray.png", }
-START = "✓  Start"
-STOP = "⊖  Stop"
-REFRESH = "↺  Refresh"
-
-def clipboard_callback(text):
+def clipboard_callback(text, notify=False):
     def copy_text_to_clipboard(_):
-        rumps.notification("EC2 Status app", "Data copied to clipboard", "")
+        if notify:
+            rumps.notification("EC2 Status app", "Data copied to clipboard", "")
         pyperclip.copy(text)
+
     return copy_text_to_clipboard
+
 
 class AWSStatus(rumps.App):
     def __init__(self):
@@ -118,7 +81,7 @@ class AWSStatus(rumps.App):
         for key in self.menu.keys():
             del self.menu[key]
 
-        instances = get_all_ec2_instances_status()
+        instances = get_ec2_instances_status(aws_config)
 
         self.status["running_instances"] = 0
         for instance in instances:
@@ -126,30 +89,46 @@ class AWSStatus(rumps.App):
             instance_id = instance[0]
             status = instance[1]
             in_type = instance[2]
+            region = instance[3]
+            data = instance[4]
+            clipboard_msg = json.dumps(data, indent=2, default=str)
 
-            instance_data_dict = {
-                "id": instance_id,
-                "type": in_type
+            display_data = {
+                "Type": in_type,
+                "Region": region,
+                "PrivateIpAddress": data["PrivateIpAddress"],
             }
 
             if status == "running":
                 self.status["running_instances"] += 1
 
+            # Menu
             instance_menu = rumps.MenuItem(
-                f"{STATE_ICON[status]}  {instance_id} ({in_type})",
-                callback=callback_placeholder,
+                f"{STATE_ICON[status]}  {instance_id}",
+                callback=empty_callback,
             )
-            instance_menu.add(rumps.separator)
+
+            # Sub-menus
             instance_menu.add(rumps.MenuItem(START, callback=None))
             instance_menu.add(rumps.MenuItem(STOP, callback=None))
-            instance_menu.add(rumps.separator)
-            instance_menu.add(rumps.MenuItem("Copy data", callback=clipboard_callback(json.dumps(instance_data_dict))))
-            instance_menu.add(rumps.separator)
 
-            self.update_submenu(instance_menu, instance_id, status)
+            instance_menu.add(rumps.separator)
+            for k, v in display_data.items():
+                instance_menu.add(
+                    rumps.MenuItem(f"{k}: {v}", callback=clipboard_callback(v))
+                )
 
+            instance_menu.add(rumps.separator)
+            instance_menu.add(
+                rumps.MenuItem(
+                    "Copy all data", callback=clipboard_callback(clipboard_msg, True)
+                )
+            )
+
+            self.update_submenu(instance_menu, (instance_id, region), status)
             self.menu.add(instance_menu)
 
+        # Main level color notification
         if self.status["running_instances"] > 0:
             self.status["app_status"] = "on"
         else:
@@ -159,15 +138,15 @@ class AWSStatus(rumps.App):
         self.menu.add(rumps.separator)
         self.menu.add(rumps.MenuItem(REFRESH, callback=self.refresh))
 
-    def update_submenu(self, menu, instance_id, status):
+    def update_submenu(self, menu, instance, status):
         if status == "running":
             menu[START].set_callback(None)
             menu[START].enabled = False
-            menu[STOP].set_callback(stop_callback(instance_id))
+            menu[STOP].set_callback(stop_callback(instance))
             menu[STOP].enabled = True
 
         elif status == "stopped":
-            menu[START].set_callback(start_callback(instance_id))
+            menu[START].set_callback(start_callback(instance))
             menu[STOP].set_callback(None)
             menu[START].enabled = True
             menu[STOP].enabled = False
