@@ -213,11 +213,6 @@ class EC2Status(rumps.App):
         return
 
 
-app = EC2Status()
-
-@app.menu("Quit")
-def quit_app(_):
-    rumps.quit_application()
-
-
-app.run()
+if __name__ == "__main__":
+    app = EC2Status()
+    app.run()
