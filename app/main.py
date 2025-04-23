@@ -3,9 +3,23 @@ import pyperclip
 import rumps
 from aws_helper import get_ec2_instances_status, stop_instance, start_instace
 from functools import partial
-from constants import OPEN_CONSOLE, STATE_ICON, APP_STATE_ICON, START, STOP, REFRESH
+from constants import (
+    DEFAULT_CONFIG_PATH,
+    OPEN_CONSOLE,
+    STATE_ICON,
+    APP_STATE_ICON,
+    START,
+    STOP,
+    REFRESH,
+)
 import webbrowser
-from configuration import config, aws_config
+from configuration import config, aws_config, default_config_path
+import os
+import subprocess
+
+
+def notify(msg):
+    rumps.notification("EC2 Status app", "", msg)
 
 
 def start_callback(instance):
@@ -27,15 +41,22 @@ def empty_callback(_):
 def clipboard_callback(text, notify=False):
     def copy_text_to_clipboard(_):
         if notify:
-            rumps.notification("EC2 Status app", "Data copied to clipboard", "", icon=f"{script_dir}/img/icon.png")
+            notify("Data copied to clipboard")
         pyperclip.copy(text)
 
     return copy_text_to_clipboard
+
 
 def go_to_console_callback(_):
     url = aws_config["console_link"]
     webbrowser.open(url)
     return
+
+
+def open_settings_callback(_):
+    subprocess.run(["open", default_config_path])
+    return
+
 
 class EC2App(rumps.App):
     def __init__(self):
@@ -73,7 +94,12 @@ class EC2App(rumps.App):
         for key in self.menu.keys():
             del self.menu[key]
 
-        instances = get_ec2_instances_status(aws_config)
+        try:
+            instances = get_ec2_instances_status(aws_config)
+        except Exception:
+            notify("Unable to fetch EC2 data")
+            instances = []
+            self.menu.add(rumps.MenuItem("No data to display", callback=None))
 
         self.status["running_instances"] = 0
         for instance in instances:
@@ -130,6 +156,7 @@ class EC2App(rumps.App):
         self.menu.add(rumps.separator)
         self.menu.add(rumps.MenuItem(OPEN_CONSOLE, callback=go_to_console_callback))
         self.menu.add(rumps.MenuItem(REFRESH, callback=self.refresh))
+        self.menu.add(rumps.MenuItem("Settings", callback=open_settings_callback))
 
     def update_submenu(self, menu, instance, status):
         if status == "running":
