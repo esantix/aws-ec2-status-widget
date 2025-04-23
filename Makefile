@@ -1,13 +1,6 @@
-.PHONY: load
+.PHONY: load kill
 load:
-	@ launchctl load com.app.ec2status.plist
-	
-.PHONY: unload
-unload:
-	@ launchctl unload com.app.ec2status.plist
+	open EC2Status.app
 
-setconf:
-	@ mkdir ~/.ec2app/
-	@ cp app/config/defaults_config.json ~/.ec2app/config.json
-
-reload: unload load
+kill:
+	ps aux | grep EC2Status | grep -v grep | awk '{print $2}' | xargs kill

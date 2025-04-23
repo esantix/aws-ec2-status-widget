@@ -26,7 +26,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 def promt_notify(msg):
-    rumps.notification("EC2 Status app", "", msg)
+    rumps.notification("EC2 Status", "", msg)
 
 
 def empty_callback(_):
@@ -50,9 +50,9 @@ def go_to_instance_callback(instance_id, region):
     return go_to_instance
 
 
-class EC2App(rumps.App):
+class EC2Status(rumps.App):
     def __init__(self):
-        super(EC2App, self).__init__("Loading...", icon=None)
+        super(EC2Status, self).__init__("Loading...", icon=None)
 
         self.load_config()
 
@@ -96,12 +96,13 @@ class EC2App(rumps.App):
         """Fetches EC2s data and refreshes menu"""
         self.load_config()
         for key in self.menu.keys():
-            del self.menu[key]
+            if key != "Quit":
+                del self.menu[key]
 
         try:
             instances_data = get_ec2_instances_status(self.aws_config)
         except Exception:
-            notify("Unable to fetch EC2 data")
+            promt_notify("⚠️ Unable to fetch EC2 data")
             instances_data = []
             self.menu.add(rumps.MenuItem("No data to display", callback=None))
 
@@ -212,4 +213,11 @@ class EC2App(rumps.App):
         return
 
 
-EC2App().run()
+app = EC2Status()
+
+@app.menu("Quit")
+def quit_app(_):
+    rumps.quit_application()
+
+
+app.run()
