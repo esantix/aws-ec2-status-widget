@@ -65,8 +65,6 @@ def start_callback(instance):
     return start_instace
 
 
-    
-
 STATE_ICON = {"stopped": "🔴", "running": "🟢", "pending": "🔺", "stopping": "🔻"}
 START = "✓  Start"
 STOP = "⊖  Stop"
@@ -79,35 +77,41 @@ def copy_text_to_clipboard(_):
 
 class AWSStatus(rumps.App):
     def __init__(self):
-        super(AWSStatus, self).__init__("EC2s", icon=None)
-        self.status = {
-            "running_instances": 0
-        }
+        super(AWSStatus, self).__init__("EC2", icon=None)
+        self.status = {"running_instances": 0}
+        self.just_ui = False
 
         self.timer = rumps.Timer(self.refresh, config["refresh_rate_s"])
         self.timer.start()
 
-        self.check_timer = rumps.Timer(self.run_checks, config["checks"]["check_rate_m"] * 60)
+        self.check_timer = rumps.Timer(
+            self.run_checks, config["checks"]["check_rate_m"] * 60
+        )
         self.check_timer.start()
 
-        self.build_menu()
+        self.refresh(None)
 
-    def run_checks(self):
-        """Runs notifications alerts check based on current data (refreshed on refresh_rate_s)
-        """
-        
-        if self.status["on_instances"] > config["checks"]["alert_running_instances_number"]:
-            rumps.notification("EC2 Status alert!", f"{self.status['on_instances']} Instances running", "")
+    def run_checks(self, _):
+        """Runs notifications alerts check based on current data (refreshed on refresh_rate_s)"""
+
+        if (
+            self.status["running_instances"]
+            > config["checks"]["alert_running_instances_number"]
+        ):
+            rumps.notification(
+                "EC2 Status alert!",
+                f"{self.status['on_instances']} Instances running",
+                "",
+            )
 
     def refresh(self, _):
-        """ Fetches EC2s data and refreshes menu
-        """
+        """Fetches EC2s data and refreshes menu"""
 
         for key in self.menu.keys():
             del self.menu[key]
 
         instances = get_all_ec2_instances_status()
-        
+
         self.status["running_instances"] = 0
         for instance in instances:
 
@@ -130,6 +134,11 @@ class AWSStatus(rumps.App):
             self.update_submenu(instance_menu, instance_id, status)
 
             self.menu.add(instance_menu)
+
+        if self.status["running_instances"] > 0:
+            self.title = "🟢 EC2"
+        else:
+            self.title = "EC2"
 
         self.menu.add(rumps.separator)
         self.menu.add(rumps.MenuItem(REFRESH, callback=self.refresh))
