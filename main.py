@@ -1,5 +1,6 @@
 from Foundation import NSBundle
 import objc
+import json
 
 info = NSBundle.mainBundle().infoDictionary()
 info["LSBackgroundOnly"] = "1"
@@ -65,6 +66,10 @@ def start_callback(instance):
     return start_instace
 
 
+def callback_placeholder(_):
+    return
+
+
 STATE_ICON = {"stopped": "🔴", "running": "🟢", "pending": "🔺", "stopping": "🔻"}
 APP_STATE_ICON = {"on": "img/green.png", "off": "img/gray.png", }
 START = "✓  Start"
@@ -73,9 +78,9 @@ REFRESH = "↺  Refresh"
 
 def clipboard_callback(text):
     def copy_text_to_clipboard(_):
+        rumps.notification("EC2 Status app", "Data copied to clipboard", "")
         pyperclip.copy(text)
     return copy_text_to_clipboard
-
 
 class AWSStatus(rumps.App):
     def __init__(self):
@@ -122,16 +127,23 @@ class AWSStatus(rumps.App):
             status = instance[1]
             in_type = instance[2]
 
+            instance_data_dict = {
+                "id": instance_id,
+                "type": in_type
+            }
+
             if status == "running":
                 self.status["running_instances"] += 1
 
             instance_menu = rumps.MenuItem(
                 f"{STATE_ICON[status]}  {instance_id} ({in_type})",
-                callback=clipboard_callback(instance_id),
+                callback=callback_placeholder,
             )
             instance_menu.add(rumps.separator)
             instance_menu.add(rumps.MenuItem(START, callback=None))
             instance_menu.add(rumps.MenuItem(STOP, callback=None))
+            instance_menu.add(rumps.separator)
+            instance_menu.add(rumps.MenuItem("Copy data", callback=clipboard_callback(json.dumps(instance_data_dict))))
             instance_menu.add(rumps.separator)
 
             self.update_submenu(instance_menu, instance_id, status)
