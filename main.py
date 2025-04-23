@@ -71,9 +71,10 @@ START = "✓  Start"
 STOP = "⊖  Stop"
 REFRESH = "↺  Refresh"
 
-
-def copy_text_to_clipboard(_):
-    pyperclip.copy(aws_config["instance_id"])
+def clipboard_callback(text):
+    def copy_text_to_clipboard(_):
+        pyperclip.copy(text)
+    return copy_text_to_clipboard
 
 
 class AWSStatus(rumps.App):
@@ -126,7 +127,7 @@ class AWSStatus(rumps.App):
 
             instance_menu = rumps.MenuItem(
                 f"{STATE_ICON[status]}  {instance_id} ({in_type})",
-                callback=copy_text_to_clipboard,
+                callback=clipboard_callback(instance_id),
             )
             instance_menu.add(rumps.separator)
             instance_menu.add(rumps.MenuItem(START, callback=None))
