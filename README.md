@@ -36,9 +36,11 @@ User or role must have read only permissions plus:
 ```
 
 ## Display
-
+#### Stopped
 ![image](./img/screenshots/stopped.png)
 
+#### Pending
 ![image](./img/screenshots/pending.png)
 
+#### Running
 ![image](./img/screenshots/running.png)
