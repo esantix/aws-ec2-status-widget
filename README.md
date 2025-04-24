@@ -50,5 +50,7 @@ pip3 install -r setup/requirements.txt
 open EC2Status.app
 ```
 
+Note: If you are considering installing an EC2 app you most probably know your way around any possible bug. Have fun!
+
 # Collaboration
 Feel free to contact me for new ideas.
