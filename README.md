@@ -15,6 +15,7 @@ EC2app is a MacOS top bar widget that lets you quickly detect you EC2 states and
 ![image](./img/screenshots/off.png)
 - Copy instance full description to clipboard
 - Go to instance's page on aws console
+- Automatic refresh. (Or force refresh)
 
 
 ## Setup
