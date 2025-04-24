@@ -19,12 +19,12 @@ EC2app is a MacOS top bar widget that lets you quickly detect you EC2 states and
 
 ## Setup
 The app requires an IAM user with permisions to fetch EC2 data. A recommended way to achieve this is:
-- Create and IAM 
+- Create an IAM user 
 - Attach a policy equivalent to [this policy](./setup/policy.json) (RO + start/stop privileges over EC2).
 - Create key pair
-- Add [credentials block](./setup/credentials) to your ~/.aws/credentials file
+- Add key pair as in [credentials block](./setup/credentials) to your ~/.aws/credentials file
+- Copy [default_config.json](./EC2Status.app/Contents/config/defaults_config.json) to ~/.ec2app/config.json and edit _aws_profile_ field with same value in previous step. (Config file can also be accessed from app menu)
 
-- Copy [default_config.json](./EC2Status.app/Contents/config/defaults_config.json) to ~/.ec2app/config.json and edit _aws_profile_ field. (Config file can be accessed from app menu)
 
 
 ## Installation
