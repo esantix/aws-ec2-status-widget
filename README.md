@@ -1,21 +1,20 @@
-# AWS EC2's status widget [WIP]
-An MacOS top bar widget to easily see and control your EC2 instances.
+# EC2app 
+
+EC2app is a MacOS top bar widget that lets you quickly detect you EC2 states and control them.
+
+
 
 
 ## Functionalities
 
 - Display green icon if any EC2 is running
+![image](./img/screenshots/on.png)
+
 - Display EC2 status for every instance in specified regions
 - Stop / Start instances
-- Copy instance full description to clipboard
-
-
-## Demo
-#### Off
 ![image](./img/screenshots/off.png)
-
-#### On
-![image](./img/screenshots/on.png)
+- Copy instance full description to clipboard
+- Go to instance's page on aws console
 
 
 ## Setup
@@ -51,3 +50,5 @@ pip3 install -r setup/requirements.txt
 open EC2Status.app
 ```
 
+# Collaboration
+Feel free to contact me for new ideas.
