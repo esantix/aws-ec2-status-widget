@@ -111,20 +111,28 @@ class EC2Status(rumps.App):
             self.menu.add(rumps.MenuItem("No data to display", callback=None))
 
         self.status["running_instances"] = 0
+        self.status["termianted_instances"] = 0
         for instance_data in instances_data:
 
+            if instance_data["State"] == "terminated" and not self.config["show_terminated"]:
+                self.status["termianted_instances"] += 1
+                continue
+                
             instance_id = instance_data["InstanceId"]
 
             clipboard_msg = json.dumps(instance_data, indent=2, default=str)
 
             display_data = {
-                "Type": instance_data["InstanceType"],
-                "Region": instance_data["Region"],
-                "Private IP": instance_data["PrivateIpAddress"],
+                "Type": instance_data.get("InstanceType", None),
+                "Region": instance_data.get("Region", None),
+                "Private IP": instance_data.get("PrivateIpAddress", None),
             }
+
 
             if instance_data["State"] == "running":
                 self.status["running_instances"] += 1
+
+
 
             # Menu
             instance_menu = rumps.MenuItem(
@@ -133,15 +141,37 @@ class EC2Status(rumps.App):
             )
 
             # Sub-menus
-            instance_menu.add(rumps.MenuItem(START, callback=None))
-            instance_menu.add(rumps.MenuItem(STOP, callback=None))
+            if instance_data["State"] != "terminated":
+                instance_menu.add(rumps.MenuItem(START, callback=None))
+                instance_menu.add(rumps.MenuItem(STOP, callback=None))
+                # Update available options based on state
+                if instance_data["State"] == "running":
+                    instance_menu[START].set_callback(None)
+                    instance_menu[START].enabled = False
+                    instance_menu[STOP].set_callback(self.stop_callback(instance_data))
+                    instance_menu[STOP].enabled = True
 
+                elif instance_data["State"] == "stopped":
+                    instance_menu[START].set_callback(self.start_callback(instance_data))
+                    instance_menu[START].enabled = True
+                    instance_menu[STOP].set_callback(None)
+                    instance_menu[STOP].enabled = False
+                else:
+                    # Disable both if in any other state
+                    instance_menu[START].set_callback(None)
+                    instance_menu[STOP].set_callback(None)
+                    instance_menu[START].enabled = False
+                    instance_menu[STOP].enabled = False
+
+            # Add data fields display
             instance_menu.add(rumps.separator)
             for k, v in display_data.items():
-                instance_menu.add(
-                    rumps.MenuItem(f"{k}: {v}", callback=clipboard_callback(v))
-                )
+                if v is not None:
+                    instance_menu.add(
+                        rumps.MenuItem(f"{k}: {v}", callback=clipboard_callback(v))
+                    )
 
+            # Common options buttons
             instance_menu.add(rumps.separator)
             instance_menu.add(
                 rumps.MenuItem(
@@ -158,7 +188,7 @@ class EC2Status(rumps.App):
                 )
             )
 
-            self.update_submenu(instance_menu, instance_data)
+            
             self.menu.add(instance_menu)
 
         # Main level color notification
@@ -178,24 +208,6 @@ class EC2Status(rumps.App):
             rumps.MenuItem(SETTINGS_BUTTON, callback=self.open_settings_callback)
         )
 
-    def update_submenu(self, menu, instance_data):
-        if instance_data["State"] == "running":
-            menu[START].set_callback(None)
-            menu[START].enabled = False
-            menu[STOP].set_callback(self.stop_callback(instance_data))
-            menu[STOP].enabled = True
-
-        elif instance_data["State"] == "stopped":
-            menu[START].set_callback(self.start_callback(instance_data))
-            menu[STOP].set_callback(None)
-            menu[START].enabled = True
-            menu[STOP].enabled = False
-        else:
-            # Disable both if in any other state
-            menu[START].set_callback(None)
-            menu[STOP].set_callback(None)
-            menu[START].enabled = False
-            menu[STOP].enabled = False
 
     def start_callback(self, instance_data):
         return partial(

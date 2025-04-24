@@ -7,6 +7,7 @@
         }
     },
     "refresh_rate_s": 30,
+    "show_terminated": false,
     "checks": {
         "check_rate_m": 60,
         "alert_running_instances_number": 1
