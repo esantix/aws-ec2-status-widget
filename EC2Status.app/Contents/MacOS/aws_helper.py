@@ -13,6 +13,7 @@ def get_ec2_instances_status(config):
     instances_data = []
 
     for region in config["regions"]:
+        logging.info(f"Fetching {region} data")
         session = boto3.Session(
             profile_name=config["aws_profile"],
             region_name=region,
@@ -25,9 +26,11 @@ def get_ec2_instances_status(config):
                 data = instance
                 data["Region"] = region
                 data["State"] = instance["State"]["Name"]
+                logging.info(f"Found instance {instance['InstanceId']}")
 
                 instances_data.append(data)
 
+    logging.debug(data)
     return instances_data
 
 

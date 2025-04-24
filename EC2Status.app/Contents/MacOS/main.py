@@ -85,7 +85,8 @@ class EC2Status(rumps.App):
 
     def load_config(self):
         self.config = get_config()
-        logging.info(self.config)
+        logging.info("Loading new config")
+        logging.debug(self.config)
         self.aws_config = self.config["server"]["aws"]
 
     def open_settings_callback(self, _):
@@ -96,13 +97,16 @@ class EC2Status(rumps.App):
         """Fetches EC2s data and refreshes menu"""
         self.load_config()
         for key in self.menu.keys():
-            if key != "Quit":
-                del self.menu[key]
+            del self.menu[key]
+
+        self.timer.interval = self.config["refresh_rate_s"]
+        self.check_timer.interval = self.config["checks"]["check_rate_m"] * 60
 
         try:
             instances_data = get_ec2_instances_status(self.aws_config)
         except Exception:
             promt_notify("⚠️ Unable to fetch EC2 data")
+            logging.error("Unable to fetch EC2 data")
             instances_data = []
             self.menu.add(rumps.MenuItem("No data to display", callback=None))
 
@@ -142,7 +146,9 @@ class EC2Status(rumps.App):
             instance_menu.add(
                 rumps.MenuItem(
                     "View on console",
-                    callback=go_to_instance_callback(instance_id, instance_data["Region"]),
+                    callback=go_to_instance_callback(
+                        instance_id, instance_data["Region"]
+                    ),
                 )
             )
             instance_menu.add(rumps.separator)
@@ -204,7 +210,7 @@ class EC2Status(rumps.App):
             stop_instance,
             config=self.aws_config,
             instance_id=instance_data["InstanceId"],
-            region=instance_data["Region"]
+            region=instance_data["Region"],
         )
 
     def go_to_console_callback(self, _):
