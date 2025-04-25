@@ -17,6 +17,15 @@ import pyperclip
 logging.basicConfig(level=logging.INFO)
 
 
+def make_cb(funtion, **kwargs):
+    def callback(_):
+        funtion(**kwargs)
+        return
+    return callback
+
+def open_url(url):
+    webbrowser.open(url)
+
 class EC2Status(rumps.App):
     def __init__(self):
         super(EC2Status, self).__init__("", icon=APP_STATE_ICON["off"])
@@ -115,22 +124,22 @@ class EC2Status(rumps.App):
                 instance_menu.add(rumps.MenuItem(STOP_BUTTON_TEXT))
 
                 if instance_state == "running":
-                    instance_menu[STOP_BUTTON_TEXT].set_callback(self.stop_cb(instance_data))
+                    instance_menu[STOP_BUTTON_TEXT].set_callback(make_cb(stop_instance, config=self.aws_config, instance_id=instance_data["InstanceId"], region=instance_data["Region"]))
                 elif instance_state == "stopped":
-                    instance_menu[START_BUTTON_TEXT].set_callback(self.start_cb(instance_data))
+                    instance_menu[START_BUTTON_TEXT].set_callback(make_cb(start_instace, config=self.aws_config, instance_id=instance_data["InstanceId"], region=instance_data["Region"]))
  
                 # Sub-menus: data
                 instance_menu.add(rumps.separator)
                 for k, v in display_data.items():
                     if v:
-                        instance_menu.add(rumps.MenuItem(f"{k}: {v}", callback=self.clipboard_cb(v)))
+                        instance_menu.add(rumps.MenuItem(f"{k}: {v}", callback=make_cb(pyperclip.copy, text=v)))
 
                 # Sub-menus: options buttons
                 instance_menu.add(rumps.separator)
                 clipboard_msg = json.dumps(instance_data, indent=2, default=str)
-                instance_menu.add(rumps.MenuItem(COPY_INSTANCE_DATA_BUTTON_TEXT, callback=self.clipboard_cb(clipboard_msg, True)))
+                instance_menu.add(rumps.MenuItem(COPY_INSTANCE_DATA_BUTTON_TEXT, callback=make_cb(pyperclip.copy, text=clipboard_msg)))
                 instance_menu.add(rumps.separator)
-                instance_menu.add(rumps.MenuItem(VIEW_ON_CONSOLE_BUTTON_TEXT, callback=self.go_to_instance_cb(instance_id, instance_data["Region"])))
+                instance_menu.add(rumps.MenuItem(VIEW_ON_CONSOLE_BUTTON_TEXT, callback=make_cb(open_url, url=instance_url(instance_id, instance_data["Region"]))))
 
                 self.menu.add(instance_menu)
 
@@ -144,47 +153,12 @@ class EC2Status(rumps.App):
 
         self.menu.add(rumps.separator)
         self.menu.add(rumps.MenuItem(REFRESH_BUTTON_TEXT, callback=self.refresh))
-        self.menu.add(rumps.MenuItem(OPEN_CONSOLE_BUTTON_TEXT, callback=self.go_to_console_cb))
+        self.menu.add(rumps.MenuItem(OPEN_CONSOLE_BUTTON_TEXT, callback=make_cb(open_url, url=self.aws_config["console_link"])))
         self.menu.add(rumps.MenuItem(SETTINGS_BUTTON_TEXT, callback=self.open_settings_cb))
-
-    def start_cb(self, instance_data):
-        return partial(
-            start_instace,
-            config=self.aws_config,
-            instance_id=instance_data["InstanceId"],
-            region=instance_data["Region"],
-        )
-
-    def stop_cb(self, instance_data):
-        return partial(
-            stop_instance,
-            config=self.aws_config,
-            instance_id=instance_data["InstanceId"],
-            region=instance_data["Region"],
-        )
-
-    def go_to_console_cb(self, _):
-        url = self.aws_config["console_link"]
-        webbrowser.open(url)
-        return
-
-    def go_to_instance_cb(self, instance_id, region):
-        def go_to_instance(_):
-            url = instance_url(instance_id, region)
-            webbrowser.open(url)
-
-        return go_to_instance
     
     def promt_notify(self, msg):
         rumps.notification(NOTIFICATION_TITLE, "", msg)
 
-    def clipboard_cb(self, text, notify=False):
-        def copy_text_to_clipboard(_):
-            if notify:
-                self.promt_notify("Data copied to clipboard")
-            pyperclip.copy(text)
-
-        return copy_text_to_clipboard
 
 
 if __name__ == "__main__":

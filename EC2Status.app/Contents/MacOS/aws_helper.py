@@ -37,7 +37,7 @@ def get_ec2_instances_status(config):
     return instances_data
 
 
-def stop_instance(_, config, instance_id, region):
+def stop_instance(config, instance_id, region):
     """ Stop EC2 instance by id
     """
     logging.info(f"Stopping instance {instance_id}...")
@@ -50,7 +50,7 @@ def stop_instance(_, config, instance_id, region):
     return
 
 
-def start_instace(_, config, instance_id, region):
+def start_instace(config, instance_id, region):
     """ Start EC2 instance by id
     """
     logging.info(f"Starting instance {instance_id}...")
