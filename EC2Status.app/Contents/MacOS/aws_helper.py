@@ -29,7 +29,7 @@ def get_ec2_instances_status(config):
                 data = instance
                 data["Region"] = region
                 data["State"] = instance["State"]["Name"]
-                logging.info(f"Found instance {instance['InstanceId']}")
+                logging.info(f"Found instance {instance['InstanceId']} in {data['State']} state")
 
                 instances_data.append(data)
 
