@@ -1,15 +1,18 @@
 import boto3
 import logging
 
-logging.basicConfig(level=logging.INFO)
+botocore_logger = logging.getLogger('botocore')
+botocore_logger.setLevel(logging.WARNING)
 
-
-def instance_link(instance_id, region):
+def instance_url(instance_id, region):
+    """ URL to EC2 instance admin console
+    """
     return f"https://{region}.console.aws.amazon.com/ec2/home?region={region}#InstanceDetails:instanceId={instance_id}"
 
 
 def get_ec2_instances_status(config):
-
+    """ Get all EC2 instaces data in given regions
+    """
     instances_data = []
 
     for region in config["regions"]:
@@ -35,6 +38,9 @@ def get_ec2_instances_status(config):
 
 
 def stop_instance(_, config, instance_id, region):
+    """ Stop EC2 instance by id
+    """
+    logging.info(f"Stopping instance {instance_id}...")
     session = boto3.Session(
         profile_name=config["aws_profile"],
         region_name=region,
@@ -45,7 +51,9 @@ def stop_instance(_, config, instance_id, region):
 
 
 def start_instace(_, config, instance_id, region):
-    print("Starting...")
+    """ Start EC2 instance by id
+    """
+    logging.info(f"Starting instance {instance_id}...")
     session = boto3.Session(
         profile_name=config["aws_profile"],
         region_name=region,

@@ -4,7 +4,7 @@ from aws_helper import (
     get_ec2_instances_status,
     stop_instance,
     start_instace,
-    instance_link,
+    instance_url,
 )
 from functools import partial
 from constants import *
@@ -41,7 +41,8 @@ class EC2Status(rumps.App):
         self.refresh(None)
 
     def run_checks(self, _):
-        """Runs notifications alerts check based on current data (refreshed on refresh_rate_s)"""
+        """Runs notifications alerts check based on current data (refreshed on refresh_rate_s)
+        """
         
         # Too many instances check
         threshold = self.config["checks"]["alert_running_instances_number"]
@@ -50,17 +51,23 @@ class EC2Status(rumps.App):
     
 
     def load_config(self):
+        """ Loads configuration to class
+        """
+        logging.info("Refreshing configuration")
         self.config = get_config()
-        logging.info("Loading new config")
-        logging.debug(self.config)
         self.aws_config = self.config["server"]["aws"]
 
+        logging.debug(self.config)
+
     def open_settings_cb(self, _):
+        """ Open configuration file
+        """
         subprocess.run(["open", self.config["default_config_path"]])
         return
 
     def refresh(self, _):
-        """Fetches EC2s data and refreshes menu"""
+        """Fetches EC2s data and refreshes menu
+        """
         self.load_config()
         for key in self.menu.keys():
             del self.menu[key]
@@ -120,10 +127,10 @@ class EC2Status(rumps.App):
 
                 # Sub-menus: options buttons
                 instance_menu.add(rumps.separator)
-                instance_menu.add(rumps.MenuItem(VIEW_ON_CONSOLE_BUTTON_TEXT, callback=self.go_to_instance_cb(instance_id, instance_data["Region"])))
-                instance_menu.add(rumps.separator)
                 clipboard_msg = json.dumps(instance_data, indent=2, default=str)
                 instance_menu.add(rumps.MenuItem(COPY_INSTANCE_DATA_BUTTON_TEXT, callback=self.clipboard_cb(clipboard_msg, True)))
+                instance_menu.add(rumps.separator)
+                instance_menu.add(rumps.MenuItem(VIEW_ON_CONSOLE_BUTTON_TEXT, callback=self.go_to_instance_cb(instance_id, instance_data["Region"])))
 
                 self.menu.add(instance_menu)
 
@@ -163,16 +170,13 @@ class EC2Status(rumps.App):
 
     def go_to_instance_cb(self, instance_id, region):
         def go_to_instance(_):
-            url = instance_link(instance_id, region)
+            url = instance_url(instance_id, region)
             webbrowser.open(url)
 
         return go_to_instance
     
     def promt_notify(self, msg):
         rumps.notification(NOTIFICATION_TITLE, "", msg)
-
-    def empty_cb(self, _):
-        return
 
     def clipboard_cb(self, text, notify=False):
         def copy_text_to_clipboard(_):

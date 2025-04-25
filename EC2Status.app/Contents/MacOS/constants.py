@@ -16,12 +16,13 @@ APP_STATE_ICON = {
     }
 
 # Menu texts
-NO_DATA_TEXT = "No data to display"
-START_BUTTON_TEXT = "✓  Start"
-STOP_BUTTON_TEXT = "⊖  Stop"
 REFRESH_BUTTON_TEXT = "Refresh"
 OPEN_CONSOLE_BUTTON_TEXT = "Open console"
 SETTINGS_BUTTON_TEXT = "Open settings"
+NO_DATA_TEXT = "No data to display"
+# Sub menu texts
+START_BUTTON_TEXT = "✓  Start"
+STOP_BUTTON_TEXT = "⊖  Stop"
 COPY_INSTANCE_DATA_BUTTON_TEXT = "Copy EC2 data"
 VIEW_ON_CONSOLE_BUTTON_TEXT = "View on console"
 
