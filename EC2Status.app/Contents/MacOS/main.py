@@ -105,7 +105,7 @@ class EC2Status(rumps.App):
                     
                 # Sub-menus: actionable
                 instance_menu.add(rumps.MenuItem(START_BUTTON_TEXT, callback=None))
-                instance_menu.add(rumps.MenuItem(START_BUTTON_TEXT, callback=None))
+                instance_menu.add(rumps.MenuItem(STOP_BUTTON_TEXT, callback=None))
 
                 if instance_data["State"] == "running":
                     instance_menu[START_BUTTON_TEXT].set_callback(self.start_cb(instance_data))
