@@ -1,6 +1,6 @@
 
 # Icons
-VM_STATE_ICON = {
+INSTANCE_STATE_EMOJI = {
     "pending": "🟠", 
     "running": "🟢", 
     "stopping": "⭕️", 

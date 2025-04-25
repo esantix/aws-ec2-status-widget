@@ -74,23 +74,23 @@ class EC2Status(rumps.App):
             self.promt_notify(FETCH_ERROR_MSG)
             logging.error("Unable to fetch EC2 data")
             instances_data = []
-            self.menu.add(rumps.MenuItem(NO_DATA_TEXT, callback=None))
+            self.menu.add(rumps.MenuItem(NO_DATA_TEXT))
 
         self.app_state["running_instances"] = 0
         self.app_state["terminated_instances"] = 0
 
         for instance_data in instances_data:
 
-            if instance_data["State"] == "terminated" and  not self.config["show_terminated"]:
+            instance_state = instance_data["State"]
+            instance_id = instance_data["InstanceId"]
+
+            if instance_state == "terminated" and not self.config["show_terminated"]:
                 self.app_state["terminated_instances"] += 1
-                logging.info(f"Not showing terminated instance {instance_data['InstanceId']}")
+                logging.info(f"Not showing terminated instance {instance_id}")
             
             else:
                 # Menu
-                instance_menu = rumps.MenuItem(
-                    f'{VM_STATE_ICON.get(instance_data["State"], "")}  {instance_data["InstanceId"]}',
-                    callback=self.empty_cb,
-                )
+                instance_menu = rumps.MenuItem(f'{INSTANCE_STATE_EMOJI[instance_state]}  {instance_id}')
 
 
                 display_data = {
@@ -100,29 +100,27 @@ class EC2Status(rumps.App):
                 }
 
                 # Update state count
-                if instance_data["State"] == "running":
+                if instance_state == "running":
                     self.app_state["running_instances"] += 1
                     
                 # Sub-menus: actionable
-                instance_menu.add(rumps.MenuItem(START_BUTTON_TEXT, callback=None))
-                instance_menu.add(rumps.MenuItem(STOP_BUTTON_TEXT, callback=None))
+                instance_menu.add(rumps.MenuItem(START_BUTTON_TEXT))
+                instance_menu.add(rumps.MenuItem(STOP_BUTTON_TEXT))
 
-                if instance_data["State"] == "running":
-                    instance_menu[START_BUTTON_TEXT].set_callback(self.start_cb(instance_data))
-                elif instance_data["State"] == "stopped":
+                if instance_state == "running":
                     instance_menu[STOP_BUTTON_TEXT].set_callback(self.stop_cb(instance_data))
+                elif instance_state == "stopped":
+                    instance_menu[START_BUTTON_TEXT].set_callback(self.start_cb(instance_data))
  
                 # Sub-menus: data
                 instance_menu.add(rumps.separator)
                 for k, v in display_data.items():
-                    if v is not None:
-                        instance_menu.add(
-                            rumps.MenuItem(f"{k}: {v}", callback=self.clipboard_cb(v))
-                        )
+                    if v:
+                        instance_menu.add(rumps.MenuItem(f"{k}: {v}", callback=self.clipboard_cb(v)))
 
                 # Sub-menus: options buttons
                 instance_menu.add(rumps.separator)
-                instance_menu.add(rumps.MenuItem(VIEW_ON_CONSOLE_BUTTON_TEXT, callback=self.go_to_instance_cb(instance_data["InstanceId"], instance_data["Region"])))
+                instance_menu.add(rumps.MenuItem(VIEW_ON_CONSOLE_BUTTON_TEXT, callback=self.go_to_instance_cb(instance_id, instance_data["Region"])))
                 instance_menu.add(rumps.separator)
                 clipboard_msg = json.dumps(instance_data, indent=2, default=str)
                 instance_menu.add(rumps.MenuItem(COPY_INSTANCE_DATA_BUTTON_TEXT, callback=self.clipboard_cb(clipboard_msg, True)))
