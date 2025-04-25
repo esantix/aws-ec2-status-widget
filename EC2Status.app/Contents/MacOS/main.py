@@ -1,29 +1,27 @@
 import json
 import rumps
-from aws_helper import (
-    get_ec2_instances_status,
-    stop_instance,
-    start_instace,
-    instance_url,
-)
-from functools import partial
-from constants import *
 import webbrowser
-from configuration import get_config
 import subprocess
 import logging
 import pyperclip
 
+from aws_helper import *
+from constants import *
+from configuration import get_config
+
 logging.basicConfig(level=logging.INFO)
 
-
 def make_cb(funtion, **kwargs):
+    """ Transform funtion to callback function
+    """
     def callback(_):
         funtion(**kwargs)
         return
     return callback
 
 def open_url(url):
+    """ Open browser at URL
+    """
     webbrowser.open(url)
 
 class EC2Status(rumps.App):
@@ -58,7 +56,6 @@ class EC2Status(rumps.App):
         if (self.app_state["running_instances"] > threshold ):
             self.promt_notify(f"More than {threshold} instances running")
     
-
     def load_config(self):
         """ Loads configuration to class
         """
@@ -158,9 +155,7 @@ class EC2Status(rumps.App):
     
     def promt_notify(self, msg):
         rumps.notification(NOTIFICATION_TITLE, "", msg)
-
-
-
+        
 if __name__ == "__main__":
     app = EC2Status()
     app.run()
