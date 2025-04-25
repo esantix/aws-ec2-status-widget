@@ -1,6 +1,6 @@
 import json
 import os
-from constants import DEFAULT_CONFIG_PATH
+from constants import APP_CONFIG_PATH
 from Foundation import NSBundle
 import logging
 
@@ -12,7 +12,7 @@ info["LSBackgroundOnly"] = "1"
 def get_config():
     # Load app config
     home_dir = os.path.expanduser("~")
-    default_config_path = f"{home_dir}/{DEFAULT_CONFIG_PATH}"
+    default_config_path = f"{home_dir}/{APP_CONFIG_PATH}"
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
     try:
